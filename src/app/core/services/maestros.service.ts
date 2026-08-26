@@ -1,11 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { getApiBaseUrl } from '../api.config';
 import { Almacen, Item, Proveedor } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class MaestrosService {
-  private readonly base = '/api';
+  private readonly base = getApiBaseUrl();
 
   constructor(private readonly http: HttpClient) {}
 

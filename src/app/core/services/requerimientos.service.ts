@@ -1,6 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { getApiBaseUrl } from '../api.config';
 import {
   EstadoRequerimiento,
   OrdenCompraResumen,
@@ -12,7 +13,7 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class RequerimientosService {
-  private readonly base = '/api/requerimientos';
+  private readonly base = `${getApiBaseUrl()}/requerimientos`;
 
   constructor(private readonly http: HttpClient) {}
 

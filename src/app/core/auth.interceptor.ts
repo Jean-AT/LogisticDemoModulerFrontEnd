@@ -2,6 +2,7 @@ import { HttpErrorResponse, HttpEvent, HttpHandlerFn, HttpInterceptorFn, HttpReq
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, tap, throwError } from 'rxjs';
+import { isApiRequest } from './api.config';
 import { SessionService } from './session.service';
 
 export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> => {
@@ -9,7 +10,7 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
   const router = inject(Router);
 
   const token = session.token();
-  const authReq = token && req.url.startsWith('/api') && !req.url.includes('/api/auth/login')
+  const authReq = token && isApiRequest(req.url) && !req.url.includes('/api/auth/login')
     ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
     : req;
 
