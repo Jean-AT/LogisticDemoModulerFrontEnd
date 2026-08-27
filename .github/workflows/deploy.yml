@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - "../.."
+      - "deploy-frontend-pages.yml"
   workflow_dispatch:
 
 permissions:
@@ -18,6 +21,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -27,7 +33,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: package-lock.json
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -41,6 +47,7 @@ jobs:
         run: npm run build -- --base-href "$BASE_HREF"
 
       - name: Prepare SPA fallback
+        shell: bash
         run: |
           cp dist/frontend/browser/index.html dist/frontend/browser/404.html
           touch dist/frontend/browser/.nojekyll
@@ -48,7 +55,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist/frontend/browser
+          path: frontend/dist/frontend/browser
 
   deploy:
     needs: build
