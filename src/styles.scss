@@ -213,6 +213,15 @@ mat-toolbar {
   background: rgba(36, 27, 57, 0.92) !important;
   backdrop-filter: blur(8px);
 }
+.mat-mdc-snack-bar-container.toast-success .mat-mdc-snack-bar-surface {
+  background: var(--color-success) !important;
+}
+.mat-mdc-snack-bar-container.toast-info .mat-mdc-snack-bar-surface {
+  background: var(--color-info) !important;
+}
+.mat-mdc-snack-bar-container.toast-error .mat-mdc-snack-bar-surface {
+  background: var(--color-danger) !important;
+}
 
 /* Scrollbar sutil */
 * {
