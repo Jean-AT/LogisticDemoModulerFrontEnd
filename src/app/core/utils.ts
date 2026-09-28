@@ -1,4 +1,5 @@
-import { Moneda } from './models';
+import { Moneda, PdfHeaderData } from './models';
+import { normalizeApiError } from './api-error';
 
 const monedaSymbol: Record<Moneda, string> = { PEN: 'S/', USD: '$' };
 
@@ -32,6 +33,9 @@ export function formatDateOnly(value: string | null | undefined): string {
 }
 
 export function downloadBlob(blob: Blob, filename: string): void {
+  if (blob.size === 0) {
+    throw new Error('El archivo descargado está vacío.');
+  }
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -66,6 +70,18 @@ export function estadoChip(estado: string): EstadoVisual {
 }
 
 export function errorMessage(err: unknown): string {
-  const anyErr = err as { error?: { message?: string; detail?: string }; message?: string };
-  return anyErr?.error?.message || anyErr?.message || 'Ocurrió un error inesperado.';
+  const apiError = normalizeApiError(err);
+  return apiError.traceId ? `${apiError.detail} Código de seguimiento: ${apiError.traceId}` : apiError.detail;
+}
+
+export function buildHeaderParams(header: PdfHeaderData): Record<string, string> {
+  return Object.entries(header as Record<string, string | undefined>).reduce<Record<string, string>>(
+    (params, [key, value]) => {
+      if (value) {
+        params[key] = value;
+      }
+      return params;
+    },
+    {},
+  );
 }

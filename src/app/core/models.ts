@@ -156,6 +156,8 @@ export interface Page<T> {
   totalPages: number;
 }
 
+export type PageResponse<T> = Page<T>;
+
 export interface PdfHeaderData {
   entidad?: string;
   areaSolicitante?: string;
