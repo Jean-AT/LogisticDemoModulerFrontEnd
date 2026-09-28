@@ -143,10 +143,10 @@ export class AprobacionDetalleComponent implements OnInit {
   }
 
   verRequerimiento(): void {
-    this.router.navigate(['/requerimientos', this.req()!.id]);
+    this.router.navigate(['/logistica/requerimientos', this.req()!.id]);
   }
 
   volver(): void {
-    this.router.navigate(['/aprobaciones']);
+    this.router.navigate(['/logistica/aprobaciones']);
   }
 }

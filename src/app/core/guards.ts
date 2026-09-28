@@ -23,5 +23,5 @@ export const roleGuard =
     if (session.hasAnyRole(...roles)) {
       return true;
     }
-    return router.createUrlTree(['/dashboard']);
+    return router.createUrlTree(['/inicio']);
   };

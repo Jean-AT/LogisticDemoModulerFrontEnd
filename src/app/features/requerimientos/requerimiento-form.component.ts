@@ -183,7 +183,7 @@ export class RequerimientoFormComponent implements OnInit {
         this.saving.set(false);
         this.snack.open('Requerimiento guardado en borrador', 'OK', { duration: 3000 });
         if (!this.editId()) {
-          this.router.navigate(['/requerimientos', req.id], { queryParams: { creado: 'true' } });
+          this.router.navigate(['/logistica/requerimientos', req.id], { queryParams: { creado: 'true' } });
         }
       },
       error: (err) => {
@@ -198,6 +198,10 @@ export class RequerimientoFormComponent implements OnInit {
   }
 
   cancelar(): void {
-    this.router.navigate([this.editId() ? '/requerimientos/' + this.editId() : '/requerimientos']);
+    this.router.navigate([
+      this.editId()
+        ? '/logistica/requerimientos/' + this.editId()
+        : '/logistica/requerimientos',
+    ]);
   }
 }

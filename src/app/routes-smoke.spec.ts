@@ -22,4 +22,32 @@ describe('Router smoke (real routes)', () => {
     const text = fixture.nativeElement.textContent as string;
     expect(text).toContain('Ingresar');
   });
+
+  it('exposes the V2 module routes inside the authenticated shell', () => {
+    const shell = routes.find((route) => route.path === '' && route.children);
+    const paths = shell?.children?.map((route) => route.path);
+
+    expect(paths).toContain('inicio');
+    expect(paths).toContain('necesidades');
+    expect(paths).toContain('presupuesto');
+    expect(paths).toContain('logistica/requerimientos');
+    expect(paths).toContain('logistica/aprobaciones');
+    expect(paths).toContain('logistica/compras');
+    expect(paths).toContain('inventario');
+    expect(paths).toContain('plataforma');
+  });
+
+  it('keeps legacy URLs as redirects and renders a real fallback route', () => {
+    const shell = routes.find((route) => route.path === '' && route.children);
+    const children = shell?.children ?? [];
+
+    expect(children.find((route) => route.path === 'dashboard')?.redirectTo).toBe('inicio');
+    expect(children.find((route) => route.path === 'requerimientos')?.redirectTo).toBe(
+      'logistica/requerimientos',
+    );
+    expect(children.find((route) => route.path === 'compras')?.redirectTo).toBe(
+      'logistica/compras',
+    );
+    expect(children.find((route) => route.path === '**')?.loadComponent).toBeTypeOf('function');
+  });
 });

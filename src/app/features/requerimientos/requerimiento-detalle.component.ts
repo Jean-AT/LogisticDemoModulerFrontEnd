@@ -98,7 +98,7 @@ export class RequerimientoDetalleComponent implements OnInit {
   }
 
   editar(): void {
-    this.router.navigate(['/requerimientos', this.req()!.id, 'editar']);
+    this.router.navigate(['/logistica/requerimientos', this.req()!.id, 'editar']);
   }
 
   money(v: number, moneda: string) {
@@ -118,7 +118,7 @@ export class RequerimientoDetalleComponent implements OnInit {
   }
 
   goOC(): void {
-    this.router.navigate(['/compras/ordenes', this.req()!.ordenCompra!.id]);
+    this.router.navigate(['/logistica/ordenes', this.req()!.ordenCompra!.id]);
   }
 
   historialText(h: EstadoHistorial): string {

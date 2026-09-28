@@ -106,7 +106,7 @@ export class AprobacionesListComponent implements OnInit {
   }
 
   ver(id: number): void {
-    this.router.navigate(['/aprobaciones', id]);
+    this.router.navigate(['/logistica/aprobaciones', id]);
   }
 
   private decidir(r: Requerimiento, accion: 'aprobar' | 'observar' | 'rechazar'): void {

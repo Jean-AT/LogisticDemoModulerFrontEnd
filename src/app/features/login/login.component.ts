@@ -80,7 +80,7 @@ export class LoginComponent {
     this.auth.login(username, password).subscribe({
       next: (res) => {
         this.session.setSession(res.token, res.user);
-        this.router.navigate(['/dashboard']);
+        this.router.navigate(['/inicio']);
       },
       error: (err) => {
         this.loading.set(false);

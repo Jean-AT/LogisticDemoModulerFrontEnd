@@ -114,11 +114,11 @@ export class RequerimientosListComponent implements OnInit {
   }
 
   ver(id: number): void {
-    this.router.navigate(['/requerimientos', id]);
+    this.router.navigate(['/logistica/requerimientos', id]);
   }
 
   nuevo(): void {
-    this.router.navigate(['/requerimientos/nuevo']);
+    this.router.navigate(['/logistica/requerimientos/nuevo']);
   }
 
   enviar(r: Requerimiento): void {

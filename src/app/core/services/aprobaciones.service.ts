@@ -1,12 +1,12 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { getApiBaseUrl } from '../api.config';
+import { getLegacyApiBaseUrl } from '../api.config';
 import { AprobacionDecisionRequest, Page, PdfHeaderData, Requerimiento } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class AprobacionesService {
-  private readonly base = `${getApiBaseUrl()}/aprobaciones`;
+  private readonly base = `${getLegacyApiBaseUrl()}/aprobaciones`;
 
   constructor(private readonly http: HttpClient) {}
 

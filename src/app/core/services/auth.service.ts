@@ -1,13 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { getApiBaseUrl } from '../api.config';
+import { getLegacyApiBaseUrl } from '../api.config';
 import { LoginResponse, Usuario } from '../models';
 import { SessionService } from '../session.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly base = `${getApiBaseUrl()}/auth`;
+  private readonly base = `${getLegacyApiBaseUrl()}/auth`;
 
   constructor(
     private readonly http: HttpClient,

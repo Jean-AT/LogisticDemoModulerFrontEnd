@@ -1,53 +1,112 @@
 <div class="shell">
   <mat-toolbar class="topbar">
-    <button mat-icon-button class="menu-btn" (click)="mobileOpened.set(!mobileOpened())" *ngIf="isMobile()">
-      <mat-icon>menu</mat-icon>
-    </button>
-    <mat-icon class="brand-icon">local_shipping</mat-icon>
-    <span class="title">Logística · Beneficencia de Lima</span>
+    @if (isMobile()) {
+      <button
+        mat-icon-button
+        class="menu-btn"
+        aria-label="Abrir navegacion"
+        [attr.aria-expanded]="mobileOpened()"
+        (click)="mobileOpened.set(!mobileOpened())"
+      >
+        <mat-icon>menu</mat-icon>
+      </button>
+    }
+
+    <mat-icon class="brand-mark">account_balance</mat-icon>
+    <span class="title">ERP Institucional</span>
     <span class="spacer"></span>
 
-    <div class="user-box">
-      <div class="avatar">{{ (user()?.fullName ?? '?').charAt(0) | uppercase }}</div>
-      <div class="meta">
-        <span class="name">{{ user()?.fullName }}</span>
-        <span class="role">{{ role() | titlecase }}</span>
+    <div class="workspace-controls" aria-label="Contexto de trabajo">
+      <div class="context-field company">
+        <mat-icon>domain</mat-icon>
+        <label>
+          <span class="context-label">Compania</span>
+          <select
+            aria-label="Compania"
+            [value]="workspace.companyId() ?? ''"
+            [disabled]="workspace.companies().length < 2"
+            (change)="selectCompany($any($event.target).value)"
+          >
+            @for (company of workspace.companies(); track company.code) {
+              <option [value]="company.id ?? ''">{{ company.name }}</option>
+            }
+          </select>
+        </label>
+      </div>
+
+      <div class="context-field">
+        <mat-icon>calendar_month</mat-icon>
+        <label>
+          <span class="context-label">Ejercicio</span>
+          <select
+            aria-label="Ejercicio fiscal"
+            [value]="workspace.fiscalYear()"
+            (change)="selectFiscalYear($any($event.target).value)"
+          >
+            @for (year of workspace.fiscalYears; track year) {
+              <option [value]="year">{{ year }}</option>
+            }
+          </select>
+        </label>
       </div>
     </div>
-    <button mat-button class="logout-btn" (click)="logout()">
+
+    <div class="user-box">
+      <div class="avatar" aria-hidden="true">{{ (user()?.fullName ?? '?').charAt(0) | uppercase }}</div>
+      <div class="user-meta">
+        <span class="user-name">{{ user()?.fullName }}</span>
+        <span class="user-role">{{ role() | titlecase }}</span>
+      </div>
+    </div>
+
+    <button mat-icon-button matTooltip="Cerrar sesion" aria-label="Cerrar sesion" (click)="logout()">
       <mat-icon>logout</mat-icon>
-      <span>Salir</span>
     </button>
   </mat-toolbar>
 
   <mat-sidenav-container class="rest">
     <mat-sidenav
-      #drawer
       [mode]="isMobile() ? 'over' : 'side'"
       [opened]="!isMobile() || mobileOpened()"
       class="sidenav"
     >
-      <div class="brand">
-        <div class="logo"><mat-icon>local_shipping</mat-icon></div>
+      <div class="sidenav-brand">
+        <div class="logo"><mat-icon>account_balance</mat-icon></div>
         <div>
           <div class="name">Beneficencia de Lima</div>
-          <div class="sub">Módulo de Logística</div>
+          <div class="sub">Gestion institucional V2</div>
         </div>
       </div>
 
-      <mat-list>
-        @for (item of navItems(); track item.link) {
-          <mat-list-item
-            class="nav-item"
-            [routerLink]="item.link"
-            routerLinkActive="active"
-            (click)="goTo(item.link)"
-          >
-            <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-            <span matListItemTitle>{{ item.label }}</span>
-          </mat-list-item>
+      @if (isMobile()) {
+        <div class="mobile-context">
+          <span>Compania</span>
+          <strong>{{ workspace.company().name }}</strong>
+        </div>
+      }
+
+      <mat-nav-list aria-label="Modulos principales">
+        @for (group of navGroups(); track group.label) {
+          <div class="nav-group">
+            @if (group.label) {
+              <p class="nav-heading">{{ group.label }}</p>
+            }
+            @for (item of group.items; track item.link) {
+              <a
+                mat-list-item
+                class="nav-item"
+                [routerLink]="item.link"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: item.link === '/inicio' }"
+                (click)="closeMobileNav()"
+              >
+                <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+                <span matListItemTitle>{{ item.label }}</span>
+              </a>
+            }
+          </div>
         }
-      </mat-list>
+      </mat-nav-list>
     </mat-sidenav>
 
     <mat-sidenav-content class="content">

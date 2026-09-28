@@ -1,12 +1,12 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { getApiBaseUrl } from '../api.config';
+import { getLegacyApiBaseUrl } from '../api.config';
 import { Moneda, OrdenCompra, Page, PdfHeaderData } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class ComprasService {
-  private readonly base = `${getApiBaseUrl()}/ordenes-compra`;
+  private readonly base = `${getLegacyApiBaseUrl()}/ordenes-compra`;
 
   constructor(private readonly http: HttpClient) {}
 

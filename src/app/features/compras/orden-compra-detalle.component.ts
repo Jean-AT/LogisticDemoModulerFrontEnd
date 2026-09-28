@@ -83,10 +83,10 @@ export class OrdenCompraDetalleComponent implements OnInit {
   }
 
   verRequerimiento(): void {
-    this.router.navigate(['/requerimientos', this.oc()!.requerimientoId]);
+    this.router.navigate(['/logistica/requerimientos', this.oc()!.requerimientoId]);
   }
 
   volver(): void {
-    this.router.navigate(['/compras']);
+    this.router.navigate(['/logistica/compras']);
   }
 }

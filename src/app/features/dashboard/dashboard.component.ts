@@ -88,15 +88,15 @@ export class DashboardComponent implements OnInit {
 
   goRequerimiento(id: number): void {
     if (this.role() === 'APROBADOR') {
-      this.router.navigate(['/aprobaciones', id]);
+      this.router.navigate(['/logistica/aprobaciones', id]);
     } else if (this.role() === 'COMPRAS') {
-      this.router.navigate(['/compras']);
+      this.router.navigate(['/logistica/compras']);
     } else {
-      this.router.navigate(['/requerimientos', id]);
+      this.router.navigate(['/logistica/requerimientos', id]);
     }
   }
 
   goNuevo(): void {
-    this.router.navigate(['/requerimientos/nuevo']);
+    this.router.navigate(['/logistica/requerimientos/nuevo']);
   }
 }

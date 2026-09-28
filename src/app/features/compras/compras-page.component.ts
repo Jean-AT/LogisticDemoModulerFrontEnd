@@ -73,7 +73,7 @@ export class ComprasPageComponent implements OnInit {
   }
 
   verRequerimiento(id: number): void {
-    this.router.navigate(['/requerimientos', id]);
+    this.router.navigate(['/logistica/requerimientos', id]);
   }
 
   generarOC(r: Requerimiento): void {
@@ -89,7 +89,7 @@ export class ComprasPageComponent implements OnInit {
       this.service.generarDesdeRequerimiento(r.id).subscribe({
         next: (oc) => {
           this.snack.open(`OC ${oc.numero} generada`, 'OK', { duration: 3000 });
-          this.router.navigate(['/compras/ordenes', oc.id]);
+          this.router.navigate(['/logistica/ordenes', oc.id]);
         },
         error: (err) => this.snack.open(errorMessage(err), 'Cerrar'),
       });
@@ -97,7 +97,7 @@ export class ComprasPageComponent implements OnInit {
   }
 
   verOC(id: number): void {
-    this.router.navigate(['/compras/ordenes', id]);
+    this.router.navigate(['/logistica/ordenes', id]);
   }
 
   money(v: number, moneda: string) {
