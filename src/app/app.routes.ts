@@ -32,12 +32,21 @@ export const routes: Routes = [
             path: 'planes',
             title: 'Cuadro de necesidades | ERP Institucional',
             loadComponent: () =>
-              import('./features/system/module-pending.component').then((m) => m.ModulePendingComponent),
-            data: {
-              icon: 'view_timeline',
-              title: 'Cuadro de necesidades',
-              message: 'La bandeja de planes se habilitara con la integracion del modulo de necesidades.',
-            },
+              import('./features/needs/needs-plans-list.component').then((m) => m.NeedsPlansListComponent),
+          },
+          {
+            path: 'planes/nuevo',
+            title: 'Nuevo Cuadro | ERP Institucional',
+            loadComponent: () =>
+              import('./features/needs/needs-plan-form-placeholder.component').then(
+                (m) => m.NeedsPlanFormPlaceholderComponent,
+              ),
+          },
+          {
+            path: 'planes/:id',
+            title: 'Detalle de Cuadro | ERP Institucional',
+            loadComponent: () =>
+              import('./features/needs/needs-plan-detail.component').then((m) => m.NeedsPlanDetailComponent),
           },
         ],
       },
