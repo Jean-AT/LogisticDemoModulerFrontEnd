@@ -171,13 +171,11 @@ export const routes: Routes = [
             path: 'catalogo',
             title: 'Plataforma | ERP Institucional',
             loadComponent: () =>
-              import('./features/system/module-pending.component').then((m) => m.ModulePendingComponent),
-            data: {
-              icon: 'settings',
-              title: 'Plataforma',
-              message: 'Catalogos, accesos, periodos y secuencias se habilitaran con el modulo de plataforma.',
-            },
+              import('./features/platform/platform-page.component').then((m) => m.PlatformPageComponent),
           },
+          { path: 'accesos', pathMatch: 'full', redirectTo: 'catalogo' },
+          { path: 'periodos', pathMatch: 'full', redirectTo: 'catalogo' },
+          { path: 'secuencias', pathMatch: 'full', redirectTo: 'catalogo' },
         ],
       },
 
