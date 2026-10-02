@@ -71,8 +71,17 @@ describe('NeedsService', () => {
   });
 
   it('creates a plan and replaces details through the V2 endpoints', () => {
-    service.createPlan({ companyId: 7, fiscalYear: 2026, description: 'Plan anual', details: [] }).subscribe();
-    service.replaceDetails(12, [{ itemCode: 'IT-1' }]).subscribe();
+    const detail = {
+      itemCode: 'IT-1',
+      unitCode: 'UND',
+      costCenterId: 1,
+      financingSourceId: 2,
+      goalId: 3,
+      expenseClassifierId: 4,
+      monthlyQuantities: [{ month: 1, requestedQuantity: 5 }],
+    };
+    service.createPlan({ companyId: 7, fiscalYear: 2026, description: 'Plan anual', details: [detail] }).subscribe();
+    service.replaceDetails(12, [detail]).subscribe();
 
     const create = http.expectOne(`${API_V1_PATH}/needs/plans`);
     expect(create.request.method).toBe('POST');
@@ -80,7 +89,7 @@ describe('NeedsService', () => {
 
     const replace = http.expectOne(`${API_V1_PATH}/needs/plans/12/details`);
     expect(replace.request.method).toBe('PUT');
-    expect(replace.request.body).toEqual([{ itemCode: 'IT-1' }]);
+    expect(replace.request.body).toEqual([detail]);
     replace.flush({ id: 12, status: 'DRAFT', details: [{ itemCode: 'IT-1' }] });
   });
 });

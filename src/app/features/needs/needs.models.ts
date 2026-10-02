@@ -53,7 +53,22 @@ export interface NeedsPlanCreateRequest {
   companyId: number;
   fiscalYear: number;
   description?: string;
-  details: unknown[];
+  details: NeedsPlanDetailRequest[];
+}
+
+export interface NeedsPlanDetailRequest {
+  itemCode: string;
+  unitCode: string;
+  costCenterId: number;
+  financingSourceId: number;
+  goalId: number;
+  expenseClassifierId: number;
+  monthlyQuantities: NeedsPlanMonthlyQuantityRequest[];
+}
+
+export interface NeedsPlanMonthlyQuantityRequest {
+  month: number;
+  requestedQuantity: number;
 }
 
 export interface NeedsPlanReviewRequest {

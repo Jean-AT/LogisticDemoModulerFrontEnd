@@ -7,6 +7,7 @@ import {
   NeedsPlan,
   NeedsPlanCreateRequest,
   NeedsPlanDecisionRequest,
+  NeedsPlanDetailRequest,
   NeedsPlanFilters,
   NeedsPlanLine,
   NeedsPlanReviewRequest,
@@ -38,7 +39,7 @@ export class NeedsService {
     return this.api.post<unknown>('/needs/plans', request).pipe(map((item) => toNeedsPlan(item)));
   }
 
-  replaceDetails(id: number, details: unknown[]): Observable<NeedsPlan> {
+  replaceDetails(id: number, details: NeedsPlanDetailRequest[]): Observable<NeedsPlan> {
     return this.api.put<unknown>(`/needs/plans/${id}/details`, details).pipe(map((item) => toNeedsPlan(item)));
   }
 

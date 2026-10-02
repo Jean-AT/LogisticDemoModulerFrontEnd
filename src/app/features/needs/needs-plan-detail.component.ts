@@ -41,6 +41,12 @@ import { NeedsService } from './needs.service';
         <mat-icon>refresh</mat-icon>
         Actualizar
       </button>
+      @if (canEdit()) {
+        <button actions mat-flat-button class="btn-primary" type="button" (click)="edit()">
+          <mat-icon>edit</mat-icon>
+          Editar
+        </button>
+      }
     </app-page-header>
 
     @switch (state().status) {
@@ -223,6 +229,15 @@ export class NeedsPlanDetailComponent {
 
   goBack(): void {
     this.router.navigate(['/necesidades/planes']);
+  }
+
+  canEdit(): boolean {
+    const status = this.state().data?.status;
+    return status === 'DRAFT' || status === 'OBSERVED';
+  }
+
+  edit(): void {
+    this.router.navigate(['/necesidades/planes', this.id, 'editar']);
   }
 
   submit(plan: NeedsPlan): void {

@@ -43,6 +43,14 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'planes/:id/editar',
+            title: 'Editar Cuadro | ERP Institucional',
+            loadComponent: () =>
+              import('./features/needs/needs-plan-form-placeholder.component').then(
+                (m) => m.NeedsPlanFormPlaceholderComponent,
+              ),
+          },
+          {
             path: 'planes/:id',
             title: 'Detalle de Cuadro | ERP Institucional',
             loadComponent: () =>
