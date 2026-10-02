@@ -56,6 +56,22 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./features/needs/needs-plan-detail.component').then((m) => m.NeedsPlanDetailComponent),
           },
+          {
+            path: 'consolidaciones',
+            title: 'Consolidaciones | ERP Institucional',
+            loadComponent: () =>
+              import('./features/needs/needs-consolidations-list.component').then(
+                (m) => m.NeedsConsolidationsListComponent,
+              ),
+          },
+          {
+            path: 'consolidaciones/:id',
+            title: 'Detalle de consolidacion | ERP Institucional',
+            loadComponent: () =>
+              import('./features/needs/needs-consolidation-detail.component').then(
+                (m) => m.NeedsConsolidationDetailComponent,
+              ),
+          },
         ],
       },
       {

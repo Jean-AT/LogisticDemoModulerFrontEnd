@@ -4,6 +4,11 @@ import { ApiClient } from '../../core/api-client.service';
 import { PageResponse } from '../../core/models';
 import {
   MonthlyQuantity,
+  NeedsBalance,
+  NeedsConsolidation,
+  NeedsConsolidationFilters,
+  NeedsConsolidationLine,
+  NeedsConsolidationSource,
   NeedsPlan,
   NeedsPlanCreateRequest,
   NeedsPlanDecisionRequest,
@@ -58,6 +63,49 @@ export class NeedsService {
   rejectPlan(id: number, request: NeedsPlanDecisionRequest): Observable<NeedsPlan> {
     return this.api.post<unknown>(`/needs/plans/${id}/reject`, request).pipe(map((item) => toNeedsPlan(item)));
   }
+
+  listConsolidations(filters: NeedsConsolidationFilters): Observable<PageResponse<NeedsConsolidation>> {
+    return this.api
+      .getPage<unknown>('/needs/consolidations', {
+        params: {
+          companyId: filters.companyId,
+          fiscalYear: filters.fiscalYear,
+          page: filters.page ?? 0,
+          size: filters.size ?? 10,
+        },
+      })
+      .pipe(map((page) => ({ ...page, content: page.content.map((item) => toNeedsConsolidation(item)) })));
+  }
+
+  getConsolidation(id: number): Observable<NeedsConsolidation> {
+    return this.api.get<unknown>(`/needs/consolidations/${id}`).pipe(map((item) => toNeedsConsolidation(item)));
+  }
+
+  createConsolidation(companyId: number, fiscalYear: number): Observable<NeedsConsolidation> {
+    return this.api
+      .post<unknown>('/needs/consolidations', {}, { params: { companyId, fiscalYear } })
+      .pipe(map((item) => toNeedsConsolidation(item)));
+  }
+
+  reverseConsolidation(id: number): Observable<NeedsConsolidation> {
+    return this.api.post<unknown>(`/needs/consolidations/${id}/reverse`, {}).pipe(map((item) => toNeedsConsolidation(item)));
+  }
+
+  transferConsolidation(id: number, idempotencyKey: string): Observable<NeedsConsolidation> {
+    return this.api
+      .post<unknown>(`/needs/consolidations/${id}/transfer`, {}, { idempotencyKey })
+      .pipe(map((item) => toNeedsConsolidation(item)));
+  }
+
+  getBalance(lineId: number, companyId: number | null): Observable<NeedsBalance> {
+    return this.api
+      .get<unknown>(`/needs/balances/${lineId}`, { params: { companyId } })
+      .pipe(map((item) => toNeedsBalance(item, lineId)));
+  }
+
+  getPlanTraceability(id: number): Observable<unknown> {
+    return this.api.get<unknown>(`/needs/traceability/plans/${id}`);
+  }
 }
 
 function toNeedsPlan(raw: unknown): NeedsPlan {
@@ -109,6 +157,64 @@ function toMonthlyQuantity(raw: unknown): MonthlyQuantity {
     requestedQuantity: readNumber(record['requestedQuantity'] ?? record['cantidadSolicitada']),
     reviewedQuantity: readNumber(record['reviewedQuantity'] ?? record['cantidadRevisada']),
     approvedQuantity: readNumber(record['approvedQuantity'] ?? record['cantidadAprobada']),
+  };
+}
+
+function toNeedsConsolidation(raw: unknown): NeedsConsolidation {
+  const record = asRecord(raw);
+  const sourcesRaw = readArray(record['sources'] ?? record['fuentes'] ?? record['plans']);
+  const linesRaw = readArray(record['lines'] ?? record['details'] ?? record['lineas']);
+  return {
+    id: Number(record['id'] ?? 0),
+    number: readString(record['number'] ?? record['numero'] ?? record['code']),
+    companyId: readNumber(record['companyId']),
+    fiscalYear: readNumber(record['fiscalYear']),
+    status: readString(record['status'] ?? record['estado']),
+    createdAt: readString(record['createdAt']),
+    updatedAt: readString(record['updatedAt']),
+    sources: sourcesRaw.map((item) => toConsolidationSource(item)),
+    lines: linesRaw.map((item) => toConsolidationLine(item)),
+    raw,
+  };
+}
+
+function toConsolidationSource(raw: unknown): NeedsConsolidationSource {
+  const record = asRecord(raw);
+  return {
+    planId: readNumber(record['planId'] ?? record['needsPlanId'] ?? record['id']),
+    planNumber: readString(record['planNumber'] ?? record['number'] ?? record['numero']),
+    status: readString(record['status'] ?? record['estado']),
+  };
+}
+
+function toConsolidationLine(raw: unknown): NeedsConsolidationLine {
+  const record = asRecord(raw);
+  const monthsRaw = readArray(record['months'] ?? record['monthlyQuantities'] ?? record['meses']);
+  return {
+    id: readNumber(record['id'] ?? record['lineId']),
+    itemCode: readString(record['itemCode'] ?? record['codigoItem']),
+    itemName: readString(record['itemName'] ?? record['nombreItem'] ?? record['description']),
+    unitCode: readString(record['unitCode'] ?? record['unidad']),
+    costCenterCode: readString(record['costCenterCode']),
+    financingSourceCode: readString(record['financingSourceCode']),
+    goalCode: readString(record['goalCode']),
+    expenseClassifierCode: readString(record['expenseClassifierCode']),
+    totalQuantity: readNumber(record['totalQuantity'] ?? record['total'] ?? record['approvedTotal']),
+    monthlyQuantities: monthsRaw.map((item) => toMonthlyQuantity(item)),
+    raw,
+  };
+}
+
+function toNeedsBalance(raw: unknown, lineId: number): NeedsBalance {
+  const record = asRecord(raw);
+  const monthsRaw = readArray(record['months'] ?? record['monthlyBalances'] ?? record['meses']);
+  return {
+    lineId: Number(record['lineId'] ?? lineId),
+    total: readNumber(record['total']),
+    available: readNumber(record['available'] ?? record['saldoDisponible']),
+    consumed: readNumber(record['consumed'] ?? record['cantidadConsumida']),
+    months: monthsRaw.map((item) => toMonthlyQuantity(item)),
+    raw,
   };
 }
 

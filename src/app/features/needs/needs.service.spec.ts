@@ -92,4 +92,58 @@ describe('NeedsService', () => {
     expect(replace.request.body).toEqual([detail]);
     replace.flush({ id: 12, status: 'DRAFT', details: [{ itemCode: 'IT-1' }] });
   });
+
+  it('lists, creates and reads consolidations with context filters', () => {
+    service.listConsolidations({ companyId: 7, fiscalYear: 2026, page: 0, size: 10 }).subscribe();
+    service.createConsolidation(7, 2026).subscribe();
+    service.getConsolidation(99).subscribe();
+
+    const list = http.expectOne(
+      (request) => request.url === `${API_V1_PATH}/needs/consolidations` && request.method === 'GET',
+    );
+    expect(list.request.method).toBe('GET');
+    expect(list.request.params.get('companyId')).toBe('7');
+    expect(list.request.params.get('fiscalYear')).toBe('2026');
+    list.flush({ content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 });
+
+    const create = http.expectOne(
+      (request) => request.url === `${API_V1_PATH}/needs/consolidations` && request.method === 'POST',
+    );
+    expect(create.request.method).toBe('POST');
+    expect(create.request.params.get('companyId')).toBe('7');
+    expect(create.request.params.get('fiscalYear')).toBe('2026');
+    create.flush({ id: 99, status: 'CREATED', lines: [] });
+
+    const detail = http.expectOne(`${API_V1_PATH}/needs/consolidations/99`);
+    expect(detail.request.method).toBe('GET');
+    detail.flush({ id: 99, status: 'CREATED', lines: [{ id: 1, itemCode: 'IT-1' }] });
+  });
+
+  it('reverses and transfers consolidations with idempotency key', () => {
+    service.reverseConsolidation(99).subscribe();
+    service.transferConsolidation(99, 'idem-1').subscribe();
+
+    const reverse = http.expectOne(`${API_V1_PATH}/needs/consolidations/99/reverse`);
+    expect(reverse.request.method).toBe('POST');
+    reverse.flush({ id: 99, status: 'REVERSED' });
+
+    const transfer = http.expectOne(`${API_V1_PATH}/needs/consolidations/99/transfer`);
+    expect(transfer.request.method).toBe('POST');
+    expect(transfer.request.headers.get('Idempotency-Key')).toBe('idem-1');
+    transfer.flush({ id: 99, status: 'TRANSFERRED' });
+  });
+
+  it('reads balances and plan traceability', () => {
+    service.getBalance(123, 7).subscribe();
+    service.getPlanTraceability(12).subscribe();
+
+    const balance = http.expectOne((request) => request.url === `${API_V1_PATH}/needs/balances/123`);
+    expect(balance.request.method).toBe('GET');
+    expect(balance.request.params.get('companyId')).toBe('7');
+    balance.flush({ lineId: 123, available: 8, months: [] });
+
+    const traceability = http.expectOne(`${API_V1_PATH}/needs/traceability/plans/12`);
+    expect(traceability.request.method).toBe('GET');
+    traceability.flush({ events: [] });
+  });
 });

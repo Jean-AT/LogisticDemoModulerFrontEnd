@@ -79,3 +79,52 @@ export interface NeedsPlanReviewRequest {
 export interface NeedsPlanDecisionRequest {
   comment?: string;
 }
+
+export interface NeedsConsolidationFilters {
+  companyId: number | null;
+  fiscalYear: number;
+  page?: number;
+  size?: number;
+}
+
+export interface NeedsConsolidation {
+  id: number;
+  number?: string;
+  companyId?: number;
+  fiscalYear?: number;
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  sources: NeedsConsolidationSource[];
+  lines: NeedsConsolidationLine[];
+  raw: unknown;
+}
+
+export interface NeedsConsolidationSource {
+  planId?: number;
+  planNumber?: string;
+  status?: string;
+}
+
+export interface NeedsConsolidationLine {
+  id?: number;
+  itemCode?: string;
+  itemName?: string;
+  unitCode?: string;
+  costCenterCode?: string;
+  financingSourceCode?: string;
+  goalCode?: string;
+  expenseClassifierCode?: string;
+  totalQuantity?: number;
+  monthlyQuantities?: MonthlyQuantity[];
+  raw?: unknown;
+}
+
+export interface NeedsBalance {
+  lineId: number;
+  total?: number;
+  available?: number;
+  consumed?: number;
+  months: MonthlyQuantity[];
+  raw: unknown;
+}
