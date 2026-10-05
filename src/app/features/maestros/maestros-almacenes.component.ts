@@ -1,18 +1,19 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { finalize } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PageHeaderComponent } from '../../shared/page-header.component';
 import { EmptyStateComponent } from '../../shared/empty-state.component';
 import { MaestrosService } from '../../core/services/maestros.service';
+import { ApiError, normalizeApiError } from '../../core/api-error';
+import { NotificationService } from '../../core/notification.service';
 import { Almacen } from '../../core/models';
-import { errorMessage } from '../../core/utils';
 
 @Component({
   selector: 'app-maestros-almacenes',
@@ -39,11 +40,13 @@ import { errorMessage } from '../../core/utils';
 export class MaestrosAlmacenesComponent implements OnInit {
   private readonly service = inject(MaestrosService);
   private readonly fb = inject(FormBuilder);
-  private readonly snack = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
 
   readonly almacenes = signal<Almacen[]>([]);
   readonly loading = signal(true);
+  readonly error = signal<ApiError | null>(null);
   readonly showForm = signal(false);
+  readonly saving = signal(false);
   readonly columns = ['code', 'name'];
 
   readonly form = this.fb.group({
@@ -52,10 +55,19 @@ export class MaestrosAlmacenesComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.load();
+  }
+
+  load(): void {
+    this.loading.set(true);
+    this.error.set(null);
     this.service.getAlmacenes().subscribe({
       next: (r) => this.almacenes.set(r),
       complete: () => this.loading.set(false),
-      error: (err) => { this.loading.set(false); this.snack.open(errorMessage(err), 'Cerrar'); },
+      error: (err) => {
+        this.loading.set(false);
+        this.error.set(normalizeApiError(err));
+      },
     });
   }
 
@@ -65,14 +77,23 @@ export class MaestrosAlmacenesComponent implements OnInit {
 
   submit(): void {
     if (this.form.invalid) return;
-    this.service.createAlmacen(this.form.getRawValue() as { code: string; name: string }).subscribe({
-      next: (a) => {
-        this.snack.open(`Almacén ${a.code} creado`, 'OK', { duration: 3000 });
-        this.almacenes.update((list) => [...list, a]);
-        this.form.reset();
-        this.showForm.set(false);
-      },
-      error: (err) => this.snack.open(errorMessage(err), 'Cerrar'),
-    });
+    this.error.set(null);
+    this.saving.set(true);
+    this.service
+      .createAlmacen(this.form.getRawValue() as { code: string; name: string })
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: (a) => {
+          this.notify.success(`Almacen ${a.code} creado.`);
+          this.almacenes.update((list) => [...list, a]);
+          this.form.reset();
+          this.showForm.set(false);
+        },
+        error: (err) => this.error.set(this.notify.error(err)),
+      });
+  }
+
+  fieldError(field: string): string | null {
+    return this.error()?.fields.find((item) => item.field === field)?.message ?? null;
   }
 }

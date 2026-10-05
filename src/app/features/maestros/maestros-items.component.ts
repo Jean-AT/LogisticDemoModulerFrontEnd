@@ -1,18 +1,19 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { finalize } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PageHeaderComponent } from '../../shared/page-header.component';
 import { EmptyStateComponent } from '../../shared/empty-state.component';
 import { MaestrosService } from '../../core/services/maestros.service';
+import { ApiError, normalizeApiError } from '../../core/api-error';
+import { NotificationService } from '../../core/notification.service';
 import { Item } from '../../core/models';
-import { errorMessage } from '../../core/utils';
 
 @Component({
   selector: 'app-maestros-items',
@@ -40,10 +41,11 @@ import { errorMessage } from '../../core/utils';
 export class MaestrosItemsComponent implements OnInit {
   private readonly service = inject(MaestrosService);
   private readonly fb = inject(FormBuilder);
-  private readonly snack = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
 
   readonly items = signal<Item[]>([]);
   readonly loading = signal(true);
+  readonly error = signal<ApiError | null>(null);
   readonly showForm = signal(false);
   readonly saving = signal(false);
   readonly columns = ['code', 'name', 'unit'] as const;
@@ -55,10 +57,19 @@ export class MaestrosItemsComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.load();
+  }
+
+  load(): void {
+    this.loading.set(true);
+    this.error.set(null);
     this.service.getItems().subscribe({
       next: (r) => this.items.set(r),
       complete: () => this.loading.set(false),
-      error: (err) => { this.loading.set(false); this.snack.open(errorMessage(err), 'Cerrar'); },
+      error: (err) => {
+        this.loading.set(false);
+        this.error.set(normalizeApiError(err));
+      },
     });
   }
 
@@ -68,16 +79,23 @@ export class MaestrosItemsComponent implements OnInit {
 
   submit(): void {
     if (this.form.invalid) return;
+    this.error.set(null);
     this.saving.set(true);
-    this.service.createItem(this.form.getRawValue() as { code: string; name: string; unitMeasure: string }).subscribe({
-      next: (it) => {
-        this.snack.open(`Ítem ${it.code} creado`, 'OK', { duration: 3000 });
-        this.items.update((list) => [...list, it]);
-        this.form.reset();
-        this.showForm.set(false);
-        this.saving.set(false);
-      },
-      error: (err) => { this.saving.set(false); this.snack.open(errorMessage(err), 'Cerrar'); },
-    });
+    this.service
+      .createItem(this.form.getRawValue() as { code: string; name: string; unitMeasure: string })
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: (it) => {
+          this.notify.success(`Item ${it.code} creado.`);
+          this.items.update((list) => [...list, it]);
+          this.form.reset();
+          this.showForm.set(false);
+        },
+        error: (err) => this.error.set(this.notify.error(err)),
+      });
+  }
+
+  fieldError(field: string): string | null {
+    return this.error()?.fields.find((item) => item.field === field)?.message ?? null;
   }
 }

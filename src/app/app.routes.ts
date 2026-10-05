@@ -83,13 +83,10 @@ export const routes: Routes = [
             path: 'pia',
             title: 'Presupuesto | ERP Institucional',
             loadComponent: () =>
-              import('./features/system/module-pending.component').then((m) => m.ModulePendingComponent),
-            data: {
-              icon: 'account_balance',
-              title: 'Presupuesto',
-              message: 'La gestion de PIA, PIM y disponibilidad se habilitara al integrar sus contratos V2.',
-            },
+              import('./features/budget/budget-page.component').then((m) => m.BudgetPageComponent),
           },
+          { path: 'disponibilidad', pathMatch: 'full', redirectTo: 'pia' },
+          { path: 'controles', pathMatch: 'full', redirectTo: 'pia' },
         ],
       },
       { path: 'logistica', pathMatch: 'full', redirectTo: 'logistica/requerimientos' },
