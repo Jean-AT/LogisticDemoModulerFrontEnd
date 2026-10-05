@@ -5,6 +5,32 @@
 </app-page-header>
 
 <div class="card" style="padding:24px;" *ngIf="!loading(); else loadingTpl">
+  <div class="notice-box" *ngIf="needsLineId(); else manualNotice">
+    <mat-icon>account_balance_wallet</mat-icon>
+    <div>
+      <strong>Origen presupuestal desde Cuadro</strong>
+      <div class="text-soft">
+        Este borrador se creará con la línea transferida {{ needsLineId() }}. El backend validará saldo y vínculo presupuestal.
+      </div>
+      <div class="origin-grid">
+        <div><span>Item Cuadro</span><strong>{{ needsItemCode() || '-' }}</strong></div>
+        <div><span>Cantidad sugerida</span><strong>{{ amount(needsQuantity() || 0) }}</strong></div>
+        <div><span>Saldo disponible</span><strong>{{ amount(balanceAvailable()) }}</strong></div>
+      </div>
+    </div>
+  </div>
+  <ng-template #manualNotice>
+    <div class="notice-box">
+      <mat-icon>info</mat-icon>
+      <div>
+        <strong>Registro manual legacy</strong>
+        <div class="text-soft">
+          El contrato actual permite crear y enviar borradores manuales, pero una aprobación puede bloquearse si no existe origen presupuestal.
+        </div>
+      </div>
+    </div>
+  </ng-template>
+
   <form [formGroup]="form" (ngSubmit)="save()">
     <h3>Cabecera</h3>
     <div class="form-header" style="margin-bottom:24px;">

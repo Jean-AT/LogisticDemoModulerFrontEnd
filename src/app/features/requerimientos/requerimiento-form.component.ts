@@ -15,6 +15,9 @@ import { MaestrosService } from '../../core/services/maestros.service';
 import { RequerimientosService } from '../../core/services/requerimientos.service';
 import { Almacen, Item, Moneda, Proveedor } from '../../core/models';
 import { errorMessage, formatAmount } from '../../core/utils';
+import { WorkspaceContextService } from '../../core/workspace-context.service';
+import { NeedsBalance } from '../needs/needs.models';
+import { NeedsService } from '../needs/needs.service';
 
 @Component({
   selector: 'app-requerimiento-form',
@@ -37,6 +40,23 @@ import { errorMessage, formatAmount } from '../../core/utils';
       `
       .form-header { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 16px; }
       .detalle-card { padding: 16px; margin-bottom: 16px; }
+      .notice-box {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        border-radius: 8px;
+        padding: 14px;
+        margin-bottom: 16px;
+        background: #fff8eb;
+        color: #8a5a05;
+      }
+      .origin-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+      }
+      .origin-grid span { display: block; font-size: 12px; color: var(--color-text-soft); text-transform: uppercase; }
       .detalle-row {
         display: grid;
         grid-template-columns: 1.6fr 1.6fr 90px 140px 110px 48px;
@@ -70,9 +90,15 @@ export class RequerimientoFormComponent implements OnInit {
   private readonly snack = inject(MatSnackBar);
   private readonly maestros = inject(MaestrosService);
   private readonly service = inject(RequerimientosService);
+  private readonly needs = inject(NeedsService);
+  private readonly workspace = inject(WorkspaceContextService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   readonly editId = signal<number | null>(null);
+  readonly needsLineId = signal<number | null>(null);
+  readonly needsItemCode = signal<string | null>(null);
+  readonly needsQuantity = signal<number | null>(null);
+  readonly balance = signal<NeedsBalance | null>(null);
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly items = signal<Item[]>([]);
@@ -98,10 +124,25 @@ export class RequerimientoFormComponent implements OnInit {
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
     this.editId.set(idParam ? Number(idParam) : null);
+    const query = this.route.snapshot.queryParamMap;
+    const lineId = Number(query?.get('needsLineId'));
+    this.needsLineId.set(Number.isFinite(lineId) && lineId > 0 ? lineId : null);
+    this.needsItemCode.set(query?.get('itemCode') || null);
+    const quantity = Number(query?.get('quantity'));
+    this.needsQuantity.set(Number.isFinite(quantity) && quantity > 0 ? quantity : null);
 
     this.maestros.getProveedores().subscribe((r) => this.proveedores.set(r));
-    this.maestros.getItems().subscribe((r) => this.items.set(r));
+    this.maestros.getItems().subscribe((r) => {
+      this.items.set(r);
+      this.syncNeedsItem();
+    });
     this.maestros.getAlmacenes().subscribe((r) => this.almacenes.set(r));
+    if (this.needsLineId()) {
+      this.needs.getBalance(this.needsLineId()!, this.workspace.companyId()).subscribe({
+        next: (balance) => this.balance.set(balance),
+        error: (err) => this.snack.open(errorMessage(err), 'Cerrar'),
+      });
+    }
 
     this.form.valueChanges.subscribe(() => this.recompute());
 
@@ -126,7 +167,8 @@ export class RequerimientoFormComponent implements OnInit {
         },
       });
     } else {
-      this.detalles.push(this.nuevaFila(null, null, 1, 0));
+      this.detalles.push(this.nuevaFila(null, null, this.needsQuantity() ?? 1, 0));
+      this.syncNeedsItem();
       this.recompute();
       this.loading.set(false);
     }
@@ -177,7 +219,11 @@ export class RequerimientoFormComponent implements OnInit {
       detalles: this.detalles.controls.map((d) => d.getRawValue()),
     };
     this.saving.set(true);
-    const call = this.editId() ? this.service.update(this.editId()!, payload) : this.service.create(payload);
+    const call = this.editId()
+      ? this.service.update(this.editId()!, payload)
+      : this.needsLineId()
+        ? this.service.createFromNeedsLine({ ...payload, needsLineId: this.needsLineId()! })
+        : this.service.create(payload);
     call.subscribe({
       next: (req) => {
         this.saving.set(false);
@@ -197,11 +243,24 @@ export class RequerimientoFormComponent implements OnInit {
     return formatAmount(v);
   }
 
+  balanceAvailable(): number {
+    return this.balance()?.available ?? this.balance()?.total ?? 0;
+  }
+
   cancelar(): void {
     this.router.navigate([
       this.editId()
         ? '/logistica/requerimientos/' + this.editId()
         : '/logistica/requerimientos',
     ]);
+  }
+
+  private syncNeedsItem(): void {
+    const code = this.needsItemCode();
+    if (!code || this.detalles.length === 0) return;
+    const item = this.items().find((candidate) => candidate.code === code);
+    if (item) {
+      this.detalles.at(0).patchValue({ itemId: item.id });
+    }
   }
 }

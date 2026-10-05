@@ -71,6 +71,10 @@ export interface RequerimientoCreateRequest {
   detalles: RequerimientoDetalleRequest[];
 }
 
+export interface RequerimientoDesdeCuadroRequest extends RequerimientoCreateRequest {
+  needsLineId: number;
+}
+
 export interface Aprobacion {
   id: number;
   accion: AccionAprobacion;

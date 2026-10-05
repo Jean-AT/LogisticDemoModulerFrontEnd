@@ -2,6 +2,10 @@
   <app-page-header [title]="req()!.numero" [subtitle]="req()!.descripcion">
     <ng-container actions>
       <app-status-chip [estado]="req()!.estado" />
+      <button mat-stroked-button type="button" [disabled]="downloading()" (click)="descargarPdf()">
+        <mat-icon>picture_as_pdf</mat-icon>
+        {{ downloading() ? 'Generando...' : 'PDF' }}
+      </button>
       <button mat-flat-button class="btn-primary" *ngIf="req()!.estado === 'BORRADOR'" (click)="enviar()">Enviar</button>
       <button mat-stroked-button *ngIf="req()!.estado === 'BORRADOR' || req()!.estado === 'OBSERVADO'" (click)="editar()">
         <mat-icon>edit</mat-icon> {{ req()!.estado === 'OBSERVADO' ? 'Corregir' : 'Editar' }}
@@ -62,6 +66,11 @@
           <span>IGV (18%): <b>{{ money(igv(req()!), req()!.moneda) }}</b></span>
           <span>Total: <b>{{ money(total(req()!), req()!.moneda) }}</b></span>
         </div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <h3>Cabecera PDF</h3>
+        <app-pdf-header-form [expanded]="false" />
       </div>
 
       <div class="card" *ngIf="req()!.aprobaciones.length > 0">

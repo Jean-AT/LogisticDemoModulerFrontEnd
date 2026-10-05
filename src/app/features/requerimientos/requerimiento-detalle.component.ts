@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,9 +12,10 @@ import { MatChipsModule } from '@angular/material/chips';
 import { PageHeaderComponent } from '../../shared/page-header.component';
 import { StatusChipComponent } from '../../shared/status-chip.component';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog.component';
+import { PdfHeaderFormComponent } from '../../shared/pdf-header-form.component';
 import { RequerimientosService } from '../../core/services/requerimientos.service';
-import { Aprobacion, EstadoHistorial, Requerimiento } from '../../core/models';
-import { accionLabel, errorMessage, formatAmount, formatDate, formatMoney } from '../../core/utils';
+import { Aprobacion, EstadoHistorial, PdfHeaderData, Requerimiento } from '../../core/models';
+import { accionLabel, downloadBlob, errorMessage, formatAmount, formatDate, formatMoney } from '../../core/utils';
 
 @Component({
   selector: 'app-requerimiento-detalle',
@@ -31,6 +32,7 @@ import { accionLabel, errorMessage, formatAmount, formatDate, formatMoney } from
     MatChipsModule,
     PageHeaderComponent,
     StatusChipComponent,
+    PdfHeaderFormComponent,
   ],
   templateUrl: './requerimiento-detalle.component.html',
   styles: [
@@ -55,6 +57,8 @@ import { accionLabel, errorMessage, formatAmount, formatDate, formatMoney } from
   ],
 })
 export class RequerimientoDetalleComponent implements OnInit {
+  @ViewChild(PdfHeaderFormComponent) headerForm!: PdfHeaderFormComponent;
+
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly service = inject(RequerimientosService);
@@ -63,6 +67,7 @@ export class RequerimientoDetalleComponent implements OnInit {
 
   readonly req = signal<Requerimiento | null>(null);
   readonly loading = signal(true);
+  readonly downloading = signal(false);
   readonly columns = ['item', 'almacen', 'cantidad', 'precio', 'subtotal'];
 
   ngOnInit(): void {
@@ -119,6 +124,18 @@ export class RequerimientoDetalleComponent implements OnInit {
 
   goOC(): void {
     this.router.navigate(['/logistica/ordenes', this.req()!.ordenCompra!.id]);
+  }
+
+  descargarPdf(): void {
+    const req = this.req();
+    if (!req) return;
+    const header: PdfHeaderData = this.headerForm?.value() ?? {};
+    this.downloading.set(true);
+    this.service.downloadPdf(req.id, header).subscribe({
+      next: (blob) => downloadBlob(blob, `requerimiento-${req.numero}.pdf`),
+      error: (err) => this.snack.open(errorMessage(err), 'Cerrar'),
+      complete: () => this.downloading.set(false),
+    });
   }
 
   historialText(h: EstadoHistorial): string {

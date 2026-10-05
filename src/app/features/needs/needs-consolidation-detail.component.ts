@@ -138,6 +138,15 @@ import { NeedsService } from './needs.service';
                   }
                 </td>
               </ng-container>
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Acciones</th>
+                <td mat-cell *matCellDef="let row">
+                  <button mat-stroked-button type="button" [disabled]="!row.id" (click)="createRequirement(row)">
+                    <mat-icon>post_add</mat-icon>
+                    Requerimiento
+                  </button>
+                </td>
+              </ng-container>
 
               <tr mat-header-row *matHeaderRowDef="columns"></tr>
               <tr mat-row *matRowDef="let row; columns: columns"></tr>
@@ -210,7 +219,7 @@ export class NeedsConsolidationDetailComponent {
   readonly workspace = inject(WorkspaceContextService);
 
   private readonly id = Number(this.route.snapshot.paramMap.get('id'));
-  readonly columns = ['item', 'dimensions', 'quantity', 'balance'];
+  readonly columns = ['item', 'dimensions', 'quantity', 'balance', 'actions'];
   readonly state = signal<LoadState<NeedsConsolidation>>(loadingState());
   readonly balances = signal<Record<number, NeedsBalance>>({});
   readonly transferring = signal(false);
@@ -300,6 +309,17 @@ export class NeedsConsolidationDetailComponent {
     this.needs.getBalance(lineId, this.workspace.companyId()).subscribe({
       next: (balance) => this.balances.update((balances) => ({ ...balances, [lineId]: balance })),
       error: (error: unknown) => this.notify.error(error),
+    });
+  }
+
+  createRequirement(line: NeedsConsolidationLine): void {
+    if (!line.id) return;
+    this.router.navigate(['/logistica/requerimientos/nuevo'], {
+      queryParams: {
+        needsLineId: line.id,
+        itemCode: line.itemCode ?? null,
+        quantity: this.lineTotal(line),
+      },
     });
   }
 

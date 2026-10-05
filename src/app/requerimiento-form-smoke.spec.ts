@@ -7,6 +7,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { RequerimientoFormComponent } from './features/requerimientos/requerimiento-form.component';
 import { MaestrosService } from './core/services/maestros.service';
 import { RequerimientosService } from './core/services/requerimientos.service';
+import { NeedsService } from './features/needs/needs.service';
+import { WorkspaceContextService } from './core/workspace-context.service';
 
 describe('RequerimientoFormComponent smoke', () => {
   beforeEach(async () => {
@@ -27,12 +29,23 @@ describe('RequerimientoFormComponent smoke', () => {
           provide: RequerimientosService,
           useValue: {
             create: () => of({}),
+            createFromNeedsLine: () => of({}),
             update: () => of({}),
             getById: () => of({}),
           },
         },
+        {
+          provide: NeedsService,
+          useValue: {
+            getBalance: () => of({ lineId: 1, available: 10, months: [], raw: {} }),
+          },
+        },
+        {
+          provide: WorkspaceContextService,
+          useValue: { companyId: () => 1 },
+        },
         { provide: MatSnackBar, useValue: { open: () => undefined } },
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: new Map() } } },
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: new Map(), queryParamMap: new Map() } } },
       ],
     }).compileComponents();
   });
