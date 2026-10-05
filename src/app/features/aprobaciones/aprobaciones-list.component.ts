@@ -117,7 +117,7 @@ export class AprobacionesListComponent implements OnInit {
         title: `¿${accion} el requerimiento ${r.numero}?`,
         message:
           accion === 'aprobar'
-            ? `Confirma la aprobación de ${r.numero}.`
+            ? `Confirma la aprobacion de ${r.numero}. El backend validara saldo y registrara el precompromiso presupuestal; puede responder 409 si no hay disponibilidad.`
             : accion === 'observar'
               ? `Se marcará como observado. Comentario obligatorio.`
               : `Se rechazará definitivamente. Comentario obligatorio.`,
@@ -143,7 +143,7 @@ export class AprobacionesListComponent implements OnInit {
             : this.service.rechazar(r.id, payload);
       call.subscribe({
         next: () => {
-          this.snack.open('Decisión registrada', 'OK', { duration: 3000 });
+          this.snack.open(accion === 'aprobar' ? 'Aprobacion registrada; presupuesto precomprometido si correspondia.' : 'Decision registrada', 'OK', { duration: 3000 });
           this.buscar();
         },
         error: (err) => this.snack.open(errorMessage(err), 'Cerrar'),

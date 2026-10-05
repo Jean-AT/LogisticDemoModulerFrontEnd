@@ -6,6 +6,16 @@
     </ng-container>
   </app-page-header>
 
+  <div class="notice-box" *ngIf="req()!.estado === 'ENVIADO' || req()!.estado === 'OBSERVADO'">
+    <mat-icon>account_balance_wallet</mat-icon>
+    <div>
+      <strong>Aprobacion con control presupuestal</strong>
+      <div class="text-soft">
+        Al aprobar, el backend valida disponibilidad y registra el precompromiso. Si el saldo no alcanza, la respuesta esperada es una regla de negocio 409.
+      </div>
+    </div>
+  </div>
+
   <div class="grid">
     <div>
       <div class="card">

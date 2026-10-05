@@ -47,6 +47,16 @@ import { accionLabel, downloadBlob, errorMessage, formatDate, formatMoney } from
       .timeline { display: flex; flex-direction: column; gap: 14px; }
       .timeline .tl { display: flex; align-items: center; gap: 10px; font-size: 14px; }
       .timeline .tl .text-soft { flex-basis: 100%; margin-top: 2px; }
+      .notice-box {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        border-radius: 8px;
+        padding: 14px;
+        margin-bottom: 20px;
+        background: #fff8eb;
+        color: #8a5a05;
+      }
     `,
   ],
 })
@@ -103,7 +113,7 @@ export class AprobacionDetalleComponent implements OnInit {
         title: `¿${accion} ${r.numero}?`,
         message:
           accion === 'aprobar'
-            ? `Confirmas la aprobación de ${r.numero}.`
+            ? `Confirmas la aprobacion de ${r.numero}. El backend validara saldo y registrara el precompromiso presupuestal; si no hay disponibilidad respondera 409.`
             : accion === 'observar'
               ? `El requerimiento quedará como observado.`
               : `El requerimiento será rechazado definitivamente.`,
@@ -123,7 +133,7 @@ export class AprobacionDetalleComponent implements OnInit {
       const call = accion === 'aprobar' ? this.service.aprobar(r.id, payload) : accion === 'observar' ? this.service.observar(r.id, payload) : this.service.rechazar(r.id, payload);
       call.subscribe({
         next: () => {
-          this.snack.open('Decisión registrada', 'OK', { duration: 3000 });
+          this.snack.open(accion === 'aprobar' ? 'Aprobacion registrada; presupuesto precomprometido si correspondia.' : 'Decision registrada', 'OK', { duration: 3000 });
           this.reload();
         },
         error: (err) => this.snack.open(errorMessage(err), 'Cerrar'),

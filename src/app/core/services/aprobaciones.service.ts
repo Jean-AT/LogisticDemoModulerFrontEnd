@@ -1,14 +1,12 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { getLegacyApiBaseUrl } from '../api.config';
+import { ApiClient } from '../api-client.service';
 import { AprobacionDecisionRequest, Page, PdfHeaderData, Requerimiento } from '../models';
+import { buildHeaderParams } from '../utils';
 
 @Injectable({ providedIn: 'root' })
 export class AprobacionesService {
-  private readonly base = `${getLegacyApiBaseUrl()}/aprobaciones`;
-
-  constructor(private readonly http: HttpClient) {}
+  private readonly api = inject(ApiClient);
 
   list(filtros?: {
     id?: number;
@@ -20,35 +18,33 @@ export class AprobacionesService {
     page?: number;
     size?: number;
   }): Observable<Page<Requerimiento>> {
-    let params = new HttpParams();
-    if (filtros?.id) params = params.set('id', filtros.id);
-    if (filtros?.estado) params = params.set('estado', filtros.estado);
-    if (filtros?.numero) params = params.set('numero', filtros.numero);
-    if (filtros?.proveedorId) params = params.set('proveedorId', filtros.proveedorId);
-    if (filtros?.fechaDesde) params = params.set('fechaDesde', filtros.fechaDesde);
-    if (filtros?.fechaHasta) params = params.set('fechaHasta', filtros.fechaHasta);
-    if (filtros?.page != null) params = params.set('page', filtros.page);
-    if (filtros?.size != null) params = params.set('size', filtros.size);
-    return this.http.get<Page<Requerimiento>>(this.base, { params });
+    return this.api.get<Page<Requerimiento>>('/aprobaciones', {
+      params: {
+        id: filtros?.id,
+        estado: filtros?.estado,
+        numero: filtros?.numero,
+        proveedorId: filtros?.proveedorId,
+        fechaDesde: filtros?.fechaDesde,
+        fechaHasta: filtros?.fechaHasta,
+        page: filtros?.page,
+        size: filtros?.size,
+      },
+    });
   }
 
   aprobar(id: number, request?: AprobacionDecisionRequest): Observable<Requerimiento> {
-    return this.http.post<Requerimiento>(`${this.base}/${id}/aprobar`, request ?? {});
+    return this.api.post<Requerimiento>(`/aprobaciones/${id}/aprobar`, request ?? {});
   }
 
   observar(id: number, request: AprobacionDecisionRequest): Observable<Requerimiento> {
-    return this.http.post<Requerimiento>(`${this.base}/${id}/observar`, request);
+    return this.api.post<Requerimiento>(`/aprobaciones/${id}/observar`, request);
   }
 
   rechazar(id: number, request: AprobacionDecisionRequest): Observable<Requerimiento> {
-    return this.http.post<Requerimiento>(`${this.base}/${id}/rechazar`, request);
+    return this.api.post<Requerimiento>(`/aprobaciones/${id}/rechazar`, request);
   }
 
   downloadPdf(id: number, header: PdfHeaderData): Observable<Blob> {
-    let params = new HttpParams();
-    for (const [key, value] of Object.entries(header as Record<string, string | undefined>)) {
-      if (value) params = params.set(key, value);
-    }
-    return this.http.get(`${this.base}/${id}/pdf`, { params, responseType: 'blob' });
+    return this.api.download(`/aprobaciones/${id}/pdf`, { params: buildHeaderParams(header) });
   }
 }
