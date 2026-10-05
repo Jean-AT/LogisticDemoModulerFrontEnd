@@ -8,6 +8,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PageHeaderComponent } from '../../shared/page-header.component';
 import { PdfHeaderFormComponent } from '../../shared/pdf-header-form.component';
+import { ConfirmDialogService } from '../../shared/confirm-dialog.service';
 import { ComprasService } from '../../core/services/compras.service';
 import { OrdenCompra, PdfHeaderData } from '../../core/models';
 import { downloadBlob, errorMessage, formatDate, formatMoney } from '../../core/utils';
@@ -45,6 +46,7 @@ export class OrdenCompraDetalleComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly service = inject(ComprasService);
+  private readonly confirm = inject(ConfirmDialogService);
   private readonly snack = inject(MatSnackBar);
 
   @ViewChild(PdfHeaderFormComponent) headerForm!: PdfHeaderFormComponent;
@@ -52,6 +54,7 @@ export class OrdenCompraDetalleComponent implements OnInit {
   readonly oc = signal<OrdenCompra | null>(null);
   readonly loading = signal(true);
   readonly exporting = signal(false);
+  readonly approving = signal(false);
   readonly columns = ['item', 'almacen', 'cantidad', 'precio', 'subtotal'];
 
   ngOnInit(): void {
@@ -80,6 +83,29 @@ export class OrdenCompraDetalleComponent implements OnInit {
       error: (err) => this.snack.open(errorMessage(err), 'Cerrar'),
       complete: () => this.exporting.set(false),
     });
+  }
+
+  aprobar(): void {
+    const oc = this.oc();
+    if (!oc) return;
+    this.confirm
+      .confirm({
+        title: 'Aprobar orden de compra',
+        message: `Aprobar ${oc.numero}. El backend comprometera presupuesto; puede responder 409 si no hay disponibilidad.`,
+        confirmText: 'Aprobar OC',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        this.approving.set(true);
+        this.service.aprobarOrden(oc.id).subscribe({
+          next: (updated) => {
+            this.oc.set(updated);
+            this.snack.open('Orden aprobada; presupuesto comprometido si correspondia.', 'OK', { duration: 3000 });
+          },
+          error: (err) => this.snack.open(errorMessage(err), 'Cerrar'),
+          complete: () => this.approving.set(false),
+        });
+      });
   }
 
   verRequerimiento(): void {

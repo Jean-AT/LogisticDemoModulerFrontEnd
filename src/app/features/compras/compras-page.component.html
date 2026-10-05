@@ -3,6 +3,16 @@
 <mat-tab-group>
   <mat-tab label="Por comprar">
     <div class="card repo">
+      <div class="known-process">
+        <mat-form-field appearance="outline">
+          <mat-label>ID proceso de cotización</mat-label>
+          <input matInput type="number" [formControl]="processId" />
+        </mat-form-field>
+        <button mat-stroked-button type="button" [disabled]="processId.invalid" (click)="verCotizacion()">
+          <mat-icon>open_in_new</mat-icon>
+          Abrir proceso
+        </button>
+      </div>
       <app-empty-state
         *ngIf="!loadingCola() && cola().length === 0"
         title="Sin pendientes por comprar"
@@ -38,6 +48,7 @@
           <th mat-header-cell *matHeaderCellDef>Acciones</th>
           <td mat-cell *matCellDef="let r">
             <button mat-button class="text-primary" (click)="verRequerimiento(r.id)">Ver</button>
+            <button mat-stroked-button class="btn-primary" (click)="abrirCotizacion(r)">Cotizar</button>
             <button mat-flat-button class="btn-primary" (click)="generarOC(r)">Generar OC</button>
           </td>
         </ng-container>

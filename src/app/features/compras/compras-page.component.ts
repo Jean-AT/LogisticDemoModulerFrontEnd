@@ -1,8 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -22,8 +25,11 @@ import { errorMessage, formatAmount, formatDate, formatMoney } from '../../core/
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
+    ReactiveFormsModule,
     MatButtonModule,
+    MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatTableModule,
     MatTabsModule,
     MatDialogModule,
@@ -37,6 +43,8 @@ import { errorMessage, formatAmount, formatDate, formatMoney } from '../../core/
       .card { padding: 16px; }
       table { width: 100%; }
       .repo { margin-bottom: 16px; }
+      .known-process { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+      .known-process mat-form-field { width: 220px; }
     `,
   ],
 })
@@ -51,6 +59,7 @@ export class ComprasPageComponent implements OnInit {
   readonly ocs = signal<Page<OrdenCompra> | null>(null);
   readonly loadingCola = signal(true);
   readonly loadingOcs = signal(true);
+  readonly processId = new FormControl<number | null>(null, { validators: [Validators.required, Validators.min(1)] });
 
   readonly colaColumns = ['numero', 'descripcion', 'proveedor', 'moneda', 'actualizado', 'total', 'acciones'];
   readonly ocColumns = ['numero', 'req', 'proveedor', 'moneda', 'total', 'fecha', 'acciones'];
@@ -94,6 +103,33 @@ export class ComprasPageComponent implements OnInit {
         error: (err) => this.snack.open(errorMessage(err), 'Cerrar'),
       });
     });
+  }
+
+  abrirCotizacion(r: Requerimiento): void {
+    const ref = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Abrir cotizacion',
+        message: `Abrir proceso de cotizacion para ${r.numero}. La API actual no publica bandeja; guarda el ID del proceso para recuperarlo.`,
+        confirmText: 'Abrir',
+      },
+    });
+    ref.afterClosed().subscribe((res) => {
+      if (!res) return;
+      this.service.abrirCotizacion(r.id).subscribe({
+        next: (result) => {
+          const id = result.procesoId ?? result.id;
+          this.snack.open('Proceso de cotizacion abierto', 'OK', { duration: 3000 });
+          if (id) this.router.navigate(['/logistica/cotizaciones', id]);
+        },
+        error: (err) => this.snack.open(errorMessage(err), 'Cerrar'),
+      });
+    });
+  }
+
+  verCotizacion(): void {
+    const id = this.processId.value;
+    if (!id) return;
+    this.router.navigate(['/logistica/cotizaciones', id]);
   }
 
   verOC(id: number): void {

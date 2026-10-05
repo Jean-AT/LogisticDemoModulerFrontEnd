@@ -1,6 +1,10 @@
 <ng-container *ngIf="oc(); else loadingTpl">
   <app-page-header [title]="oc()!.numero" [subtitle]="'Detalle de orden de compra'">
     <ng-container actions>
+      <button mat-flat-button class="btn-primary" type="button" [disabled]="approving()" (click)="aprobar()">
+        <mat-icon>verified</mat-icon>
+        {{ approving() ? 'Aprobando...' : 'Aprobar OC' }}
+      </button>
       <button mat-stroked-button (click)="verRequerimiento()">Ver requerimiento origen</button>
     </ng-container>
   </app-page-header>

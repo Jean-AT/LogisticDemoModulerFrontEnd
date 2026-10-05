@@ -148,6 +148,36 @@ export interface OrdenCompra {
   createdAt: string;
 }
 
+export interface CotizacionOfertaRequest {
+  requerimientoDetalleId: number;
+  proveedorId: number;
+  precioUnitario: number;
+  plazoDias?: number;
+  comentario?: string;
+}
+
+export interface CotizacionAdjudicarRequest {
+  ofertaId: number;
+  comentario?: string;
+}
+
+export interface CotizacionOperacionResult {
+  id?: number;
+  procesoId?: number;
+  adjudicacionId?: number;
+  status?: string;
+  raw: unknown;
+}
+
+export interface CotizacionProceso {
+  id: number;
+  requerimientoId?: number;
+  requerimientoNumero?: string;
+  status?: string;
+  ofertas: unknown[];
+  raw: unknown;
+}
+
 export interface AprobacionDecisionRequest {
   comentario?: string;
 }

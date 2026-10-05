@@ -1,17 +1,61 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { getLegacyApiBaseUrl } from '../api.config';
-import { Moneda, OrdenCompra, Page, PdfHeaderData } from '../models';
+import { map } from 'rxjs/operators';
+import { ApiClient } from '../api-client.service';
+import { buildHeaderParams } from '../utils';
+import {
+  CotizacionAdjudicarRequest,
+  CotizacionOfertaRequest,
+  CotizacionOperacionResult,
+  CotizacionProceso,
+  Moneda,
+  OrdenCompra,
+  Page,
+  PdfHeaderData,
+} from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class ComprasService {
-  private readonly base = `${getLegacyApiBaseUrl()}/ordenes-compra`;
+  private readonly api = inject(ApiClient);
 
-  constructor(private readonly http: HttpClient) {}
+  abrirCotizacion(requerimientoId: number): Observable<CotizacionOperacionResult> {
+    return this.api
+      .post<unknown>(`/cotizaciones/procesos/requerimientos/${requerimientoId}`, {})
+      .pipe(map((raw) => toCotizacionResult(raw)));
+  }
+
+  getCotizacion(procesoId: number): Observable<CotizacionProceso> {
+    return this.api.get<unknown>(`/cotizaciones/procesos/${procesoId}`).pipe(map((raw) => toCotizacionProceso(raw)));
+  }
+
+  registrarOferta(procesoId: number, request: CotizacionOfertaRequest): Observable<CotizacionOperacionResult> {
+    return this.api
+      .post<unknown>(`/cotizaciones/procesos/${procesoId}/ofertas`, request)
+      .pipe(map((raw) => toCotizacionResult(raw)));
+  }
+
+  cerrarCotizacion(procesoId: number): Observable<CotizacionOperacionResult> {
+    return this.api
+      .post<unknown>(`/cotizaciones/procesos/${procesoId}/cerrar`, {})
+      .pipe(map((raw) => toCotizacionResult(raw)));
+  }
+
+  adjudicarCotizacion(procesoId: number, request: CotizacionAdjudicarRequest): Observable<CotizacionOperacionResult> {
+    return this.api
+      .post<unknown>(`/cotizaciones/procesos/${procesoId}/adjudicar`, request)
+      .pipe(map((raw) => toCotizacionResult(raw)));
+  }
 
   generarDesdeRequerimiento(requerimientoId: number): Observable<OrdenCompra> {
-    return this.http.post<OrdenCompra>(`${this.base}/desde-requerimiento/${requerimientoId}`, null);
+    return this.api.post<OrdenCompra>(`/ordenes-compra/desde-requerimiento/${requerimientoId}`, {});
+  }
+
+  generarDesdeAdjudicacion(adjudicacionId: number): Observable<OrdenCompra> {
+    return this.api.post<OrdenCompra>(`/ordenes-compra/desde-adjudicacion/${adjudicacionId}`, {});
+  }
+
+  aprobarOrden(id: number): Observable<OrdenCompra> {
+    return this.api.post<OrdenCompra>(`/ordenes-compra/${id}/aprobar`, {});
   }
 
   list(filtros?: {
@@ -24,27 +68,50 @@ export class ComprasService {
     page?: number;
     size?: number;
   }): Observable<Page<OrdenCompra>> {
-    let params = new HttpParams();
-    if (filtros?.numero) params = params.set('numero', filtros.numero);
-    if (filtros?.proveedorId) params = params.set('proveedorId', filtros.proveedorId);
-    if (filtros?.moneda) params = params.set('moneda', filtros.moneda);
-    if (filtros?.requerimientoId) params = params.set('requerimientoId', filtros.requerimientoId);
-    if (filtros?.fechaDesde) params = params.set('fechaDesde', filtros.fechaDesde);
-    if (filtros?.fechaHasta) params = params.set('fechaHasta', filtros.fechaHasta);
-    if (filtros?.page != null) params = params.set('page', filtros.page);
-    if (filtros?.size != null) params = params.set('size', filtros.size);
-    return this.http.get<Page<OrdenCompra>>(this.base, { params });
+    return this.api.get<Page<OrdenCompra>>('/ordenes-compra', { params: filtros });
   }
 
   getById(id: number): Observable<OrdenCompra> {
-    return this.http.get<OrdenCompra>(`${this.base}/${id}`);
+    return this.api.get<OrdenCompra>(`/ordenes-compra/${id}`);
   }
 
   downloadPdf(id: number, header: PdfHeaderData): Observable<Blob> {
-    let params = new HttpParams();
-    for (const [key, value] of Object.entries(header as Record<string, string | undefined>)) {
-      if (value) params = params.set(key, value);
-    }
-    return this.http.get(`${this.base}/${id}/pdf`, { params, responseType: 'blob' });
+    return this.api.download(`/ordenes-compra/${id}/pdf`, { params: buildHeaderParams(header) });
   }
+}
+
+function toCotizacionProceso(raw: unknown): CotizacionProceso {
+  const record = asRecord(raw);
+  return {
+    id: readNumber(record['id'] ?? record['procesoId']) ?? 0,
+    requerimientoId: readNumber(record['requerimientoId']),
+    requerimientoNumero: readString(record['requerimientoNumero'] ?? record['numeroRequerimiento']),
+    status: readString(record['status'] ?? record['estado']),
+    ofertas: Array.isArray(record['ofertas']) ? record['ofertas'] : [],
+    raw,
+  };
+}
+
+function toCotizacionResult(raw: unknown): CotizacionOperacionResult {
+  const record = asRecord(raw);
+  return {
+    id: readNumber(record['id']),
+    procesoId: readNumber(record['procesoId'] ?? record['processId'] ?? record['id']),
+    adjudicacionId: readNumber(record['adjudicacionId'] ?? record['awardId'] ?? record['id']),
+    status: readString(record['status'] ?? record['estado']),
+    raw,
+  };
+}
+
+function readString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim().length > 0 ? value : undefined;
+}
+
+function readNumber(value: unknown): number | undefined {
+  const next = Number(value);
+  return Number.isFinite(next) ? next : undefined;
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {};
 }

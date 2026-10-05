@@ -144,6 +144,12 @@ export const routes: Routes = [
         canActivate: [roleGuard([...comprasRoles])],
       },
       {
+        path: 'logistica/cotizaciones/:id',
+        loadComponent: () =>
+          import('./features/compras/cotizacion-detalle.component').then((m) => m.CotizacionDetalleComponent),
+        canActivate: [roleGuard(['COMPRAS', 'ADMIN', 'APROBADOR'])],
+      },
+      {
         path: 'logistica/ordenes',
         loadComponent: () =>
           import('./features/compras/compras-page.component').then((m) => m.ComprasPageComponent),
